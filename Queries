@@ -1,0 +1,125 @@
+// 1.	List all teams that have ever played EPL matches since 2000.
+
+MATCH (t:Teams)-[:PLAYED_HOME|PLAYED_AWAY]->(m:Matches)-[:PART_OF]->(s:Seasons)
+WHERE s.season >= "2000"
+RETURN DISTINCT t.name as Team
+ORDER BY Team
+
+
+// 2.	Display all matches “Liverpool” won against “Man United” since 2010.
+
+MATCH (l:Teams{name:"Liverpool"})-[:PLAYED_HOME]->(m:Matches)<-[:PLAYED_AWAY]-(u:Teams{name:"Man United"})
+WHERE m.dateTime >= datetime("2010-01-01") AND m.full_time_result = "H"
+RETURN m.dateTime AS MatchDate, l.name AS HomeTeam, m.full_time_home_team_goals AS HomeGoals, u.name AS AwayTeam, m.full_time_away_team_goals AS AwayGoals
+
+
+// 3.	Display top five referees and the number of matches they refereed since 2000.
+
+MATCH (r:Referees)-[:REFEREED]->(m:Matches)
+WHERE m.dateTime >= datetime("2000-01-01")
+WITH r, count(*) AS matches_count
+ORDER BY matches_count DESC
+LIMIT 5
+RETURN r.referee AS Referee, matches_count AS MatchesRefereed
+
+/* Finds referees connected to matches through the relationship from 2000.
+MATCH (r:Referees)-[:REFEREED]->(m:Matches)
+WHERE m.dateTime >= datetime("2000-01-01")
+It then counts the number of matches each referee participated in.
+WITH r, count(*) AS matches_count
+Orders the referees by the number of matches in descending order, limiting the results to the top 5 referees.
+ORDER BY matches_count DESC
+LIMIT 5
+Returns the referee's name and the number of matches they officiated.
+RETURN… */
+
+// 4.	Display all teams and the total numbers of goals they scored and conceded in the 2020/21 season;
+MATCH (t:Teams)-[:PLAYED_HOME|PLAYED_AWAY]->(m:Matches)-[:PART_OF]->(s:Seasons{season:"2020-21"})
+WITH t, SUM(CASE WHEN t.name = m.HomeTeam THEN m.full_time_home_team_goals ELSE m.full_time_away_team_goals END) AS goals_scored,
+     SUM(CASE WHEN t.name = m.HomeTeam THEN m.full_time_away_team_goals ELSE m.full_time_home_team_goals END) AS goals_conceded
+RETURN t.name AS Team, goals_scored AS GoalsScored, goals_conceded AS GoalsConceded
+ORDER BY GoalsScored DESC;
+
+//5.	Which team had the best home winning record since 2000.
+
+MATCH (t:Teams)-[:PLAYED_HOME]->(m:Matches)
+WHERE m.dateTime >= datetime("2000-01-01") AND m.full_time_result = "H"
+WITH t, count(*) AS home_wins
+RETURN t.name AS Team, home_wins AS `Home Wins`
+ORDER BY `Home Wins` DESC LIMIT 1
+
+/* Matches all the teams that have played at home and filter to after 2000 with a full time win
+MATCH (t:Teams)-[:PLAYED_HOME]->(m:Matches)
+WHERE m.dateTime >= datetime("2000-01-01") AND m.full_time_result = "H"
+Group the teams and counts the number of home wins as home_wins adding ‘ Home Wins’ to column.
+WITH t, count(*) AS home_wins
+Returns names and home wins amount, ordering descending and limits to 1 to show the most
+RETURN t.name AS Team, home_wins AS `Home Wins`
+ORDER BY 'Home Wins' DESC
+LIMIT 1 */
+
+// 6.	Which team lost the most matches in 2020/21 season?
+
+MATCH (t:Teams)-[:PLAYED_HOME|PLAYED_AWAY]->(m:Matches)-[:PART_OF]->(s:Seasons{season:"2020-21"})
+WHERE m.full_time_result = "A"
+WITH t, count(*) AS losses
+RETURN t.name AS `Team Name`, losses AS `Losses`
+ORDER BY `Losses` DESC LIMIT 1
+
+
+// 7.	Which teams lost the 1st half but won the match in 2020/21 season. 
+
+MATCH (h:Teams)-[:PLAYED_HOME|PLAYED_AWAY]->(m:Matches)-[:PART_OF]->(s:Seasons{season:"2020-21"})
+WHERE m.half_time_result = "A" AND m.full_time_result = "H"
+RETURN h.name AS `Team Name`, m.dateTime AS `Match Date`
+ORDER BY `Match Date`
+
+
+// 8.	Which team earned the highest ever points in all seasons since 2000
+
+MATCH (t:Teams)-[:PLAYED_HOME|PLAYED_AWAY]->(m:Matches)-[PLAYED_IN]->(s:Seasons)
+WHERE toInteger(split(s.season, '-')[0]) >= 2000
+WITH t, 
+     sum(CASE WHEN t.name = m.HomeTeam THEN 
+                 CASE WHEN m.full_time_result = 'H' THEN 3 
+                      WHEN m.full_time_result = 'D' THEN 1 
+                      ELSE 0 END 
+                 ELSE 
+                 CASE WHEN m.full_time_result = 'A' THEN 3 
+                      WHEN m.full_time_result = 'D' THEN 1 
+                      ELSE 0 END 
+             END) AS points
+RETURN t.name AS `Team Name`, sum(points) AS `Total Points`
+ORDER BY `Total Points` DESC
+LIMIT 1
+
+/* Finds teams that played either as a home team or away team in matches of seasons from the year 2000 and onwards
+MATCH (t:Teams)-[:PLAYED_HOME|PLAYED_AWAY]->(m:Matches)-[PLAYED_IN]->(s:Seasons)
+WHERE toInteger(split(s.season, '-')[0]) >= 2000
+Calculates the total number of points each team earned in those matches based on the match results: 3 points for a win, 1 point for a draw, and 0 points for a loss. 
+     sum(CASE WHEN t.name = m.HomeTeam THEN 
+                 CASE WHEN m.full_time_result = 'H' THEN 3 
+                      WHEN m.full_time_result = 'D' THEN 1 
+                      ELSE 0 END 
+                 ELSE 
+                 CASE WHEN m.full_time_result = 'A' THEN 3 
+                      WHEN m.full_time_result = 'D' THEN 1 
+                      ELSE 0 END 
+             END) AS points
+Returns the team name and its total points, sorted in descending order by points, and the team with the most points is returned
+RETURN… */
+
+// 9.	Display the final league table ranking of all teams in the 2020/21 season (based on the total points).
+MATCH (t:Teams)-[:PLAYED_HOME|PLAYED_AWAY]->(m:Matches)-[:PART_OF]->(s:Seasons{season:"2020-21"})
+WITH t, SUM(CASE WHEN t.name = m.HomeTeam THEN 
+                 CASE WHEN m.full_time_result = 'H' THEN 3 
+                      WHEN m.full_time_result = 'D' THEN 1 
+                      ELSE 0 END 
+                 ELSE 
+                 CASE WHEN m.full_time_result = 'A' THEN 3 
+                      WHEN m.full_time_result = 'D' THEN 1 
+                      ELSE 0 END 
+             END) AS points
+RETURN t.name AS `Team Name`, sum(points) AS `Total Points`
+ORDER BY `Total Points` DESC
+
