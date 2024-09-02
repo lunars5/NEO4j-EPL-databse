@@ -1,33 +1,60 @@
 NEO4j Graph Database  of EPL matches
 
 The database has the following nodes and properties:
+
 •	Teams	
-  o	name
+
+  name
+	
 •	Matches	
-  o	matchName
-  o	dateTime
-  o	full_time_home_team_goals
-  o	full_time_away_team_goals
-  o	full_time_result
-  o	half_time_home_team_goals
-  o	half_time_away_team_goals
-  o	half_time_result
-  o	home_team_shots
-  o	away_team_shots
-  o	home_team_shots_on_target
-  o	away_team_shots_on_target
-  o	home_team_corners
-  o	away_team_corners
-  o	home_team_fouls_committed
-  o	away_team_fouls_committed 
-  o	home_team_yellow_cards
-  o	away_team_yellow_cards
-  o	home_team_red_cards
-  o	away_team_red_cards
+
+  matchName
+	
+  dateTime
+	
+  full_time_home_team_goals
+	
+  full_time_away_team_goals
+	
+  full_time_result
+	
+  half_time_home_team_goals
+ 
+  half_time_away_team_goals
+	
+  half_time_result
+	
+  home_team_shots
+	
+  away_team_shots
+	
+  home_team_shots_on_target
+	
+  away_team_shots_on_target
+	
+  home_team_corners
+	
+  away_team_corners
+	
+  home_team_fouls_committed
+	
+  away_team_fouls_committed 
+	
+  home_team_yellow_cards
+	
+  away_team_yellow_cards
+	
+  home_team_red_cards
+	
+  away_team_red_cards
+	
 •	Seasons	
-  o	season 
+
+  season 
+	
 •	Referees 	
-  o	Referee
+  
+ Referee
 
 
 The relationships are:
